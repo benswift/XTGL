@@ -13,7 +13,7 @@ typedef struct XTGLGLXcontext
   GLXContext    context;  
 } XTGLGLXcontext;
 
-int singleBufferAttributess[] = {
+int singleBufferAttributes[] = {
   GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
   GLX_RENDER_TYPE,   GLX_RGBA_BIT,
   GLX_RED_SIZE,      1,   /* Request a single buffered color buffer */
@@ -127,7 +127,7 @@ XTGLcontext* xtglCreateContext(int x, int y, int width, int height, char *displa
   fbConfigs = glXChooseFBConfig( dpy, DefaultScreen(dpy), doubleBufferAttributes, &numReturned );
 
   if ( fbConfigs == NULL ) {  /* no double buffered configs available */
-    fbConfigs = glXChooseFBConfig( dpy, DefaultScreen(dpy), singleBufferAttributess, &numReturned );
+    fbConfigs = glXChooseFBConfig( dpy, DefaultScreen(dpy), singleBufferAttributes, &numReturned );
     swapFlag = False;
   }
 
