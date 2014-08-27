@@ -20,7 +20,5 @@ TARGET := $(LIBNAME).$(LIBEXT)
 $(TARGET): src/XTGL.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
-shared: $(TARGET)
-
 clean:
-	rm -f *.o *.so *.dll *.exe
+	rm -f *.o *.so *.dylib *.dll *.exe
