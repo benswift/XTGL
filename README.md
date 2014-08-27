@@ -1,9 +1,8 @@
-# libXTGL
+# libxtgl
 
-libXTGL is a cross-platform OpenGL context and window management
+libxtgl is a cross-platform OpenGL context and window management
 library which was previously part of
-[Extempore](http://extempore.moso.com.au) (e**XT**empore **GL**
-library).
+[Extempore](http://extempore.moso.com.au) (eXTempore's GL library).
 
 This code has since been stripped out of the Extempore executable, and
 so now if you want to create OpenGL contexts then you can use this
@@ -13,9 +12,17 @@ If you have any issues using this library in Extempore, check out the
 [Extempore Docs](http://benswift.me/extempore-docs) or hit us up on
 the [Extempore mailing list](mailto:extemporelang@googlegroups.com).
 
+# Installation
+
+On Linux/OSX, clone the repo or download the source code and `make`.
+There's no install step at this stage, but you can manually link it
+into `/usr/local/lib` if you like.
+
+I'll put together a homebrew formula when it gets a bit more mature.
+
 # Licence
 
-Copyright (c) 2011-2013, Andrew Sorensen
+Copyright (c) 2011-2014, Andrew Sorensen
 
 All rights reserved.
 
