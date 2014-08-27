@@ -2,8 +2,8 @@
 extern "C" {
 #endif
 
-  typedef void * XTGLcontext;
-  typedef void * XTGLevent;
+  typedef void XTGLcontext;
+  typedef void XTGLevent;
   /* typedef XTGLwindow* void*; */
 
   XTGLcontext *xtglCreateContext(int x, int y, int width, int height, char *displayID, int fullscreen);
