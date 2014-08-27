@@ -22,13 +22,13 @@ int doubleBufferAttributes[] = {
   None
 };
 
-static Bool EXTGLWaitForNotify( Display *dpy, XEvent *event, XPointer arg ) {
+static Bool xtglWaitForNotify( Display *dpy, XEvent *event, XPointer arg ) {
   return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
 
 void xtglSwapBuffers(XTGLcontext *ctx)
 {
-  return glXSwapBuffers((Display*)ctx, (GLXDrawable) cptr_value(pair_cadr(args)));
+  // glXSwapBuffers((Display*)ctx, (GLXDrawable) cptr_value(pair_cadr(args)));
 }
 
 void xtglMakeContextCurrent(XTGLcontext* ctx)
@@ -37,83 +37,25 @@ void xtglMakeContextCurrent(XTGLcontext* ctx)
   GLXDrawable glxWin = (GLXDrawable) cptr_value(pair_cadr(args));
   GLXContext context = (GLXContext) cptr_value(pair_caddr(args));
   /* Bind the GLX context to the Window */
-  return glXMakeContextCurrent( (Display*) dpy, (GLXDrawable) glxWin, (GLXDrawable) glxWin, (GLXContext) context);    
+  glXMakeContextCurrent( (Display*) dpy, (GLXDrawable) glxWin, (GLXDrawable) glxWin, (GLXContext) context);    
 }
 
 void xtglGetEvent(XTGLcontext* ctx, XTGLevent* event)
 {
   args = pair_car(args);
   Display* dpy = (Display*) cptr_value(pair_car(args));
-  XEvent event;
+  XEvent xev;
   if(XPending(dpy) == 0) return _sc->NIL;
   //only return the LATEST event. DROP eveything earlier
-  while(XPending(dpy)) XNextEvent(dpy, &event);
-  switch(event.type){
-  case ButtonPress: {
-    XButtonEvent be = event.xbutton;
-    pointer list = _sc->NIL;
-    _sc->imp_env->insert(list);
-    pointer tlist = cons(_sc,mk_integer(_sc,be.y),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    _sc->imp_env->insert(list);
-    tlist = cons(_sc,mk_integer(_sc,be.x),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    tlist = cons(_sc,mk_integer(_sc,be.button),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    tlist = cons(_sc,mk_integer(_sc,be.state),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    tlist = cons(_sc,mk_integer(_sc,0),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    return list;
-  }
-  case MotionNotify: {
-    XMotionEvent me = event.xmotion;
-    pointer list = _sc->NIL;
-    _sc->imp_env->insert(list);
-    pointer tlist = cons(_sc,mk_integer(_sc,me.y),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    _sc->imp_env->insert(list);
-    tlist = cons(_sc,mk_integer(_sc,me.x),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    tlist = cons(_sc,mk_integer(_sc,me.state),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    tlist = cons(_sc,mk_integer(_sc,1),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    return list;
-  }
-  case KeyPress: {
-    XKeyEvent ke = event.xkey;
-    pointer list = _sc->NIL;
-    _sc->imp_env->insert(list);
-    pointer tlist = cons(_sc,mk_integer(_sc,ke.y),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    _sc->imp_env->insert(list);
-    tlist = cons(_sc,mk_integer(_sc,ke.x),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    tlist = cons(_sc,mk_integer(_sc,ke.keycode),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    tlist = cons(_sc,mk_integer(_sc,ke.state),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    tlist = cons(_sc,mk_integer(_sc,2),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    return list;
-  }
-  default:
-    return _sc->NIL;
+  while(XPending(dpy)) XNextEvent(dpy, &xev);
+  // switch(event.type){
+  // case ButtonPress: 
+  // case MotionNotify: 
+  // case KeyPress: 
+  // default:
+  int* eventBuf = (int*) event;
+  // set event type into first i32 slot of event pointer
+  eventBuf[0] = xev.type;
   }
 }
 
@@ -231,7 +173,7 @@ void* opengl_render_callback(void* a)
     
   /* Map the window to the screen, and wait for it to appear */
   XMapWindow( dpy, xWin );
-  XIfEvent( dpy, &event, EXTGLWaitForNotify, (XPointer) xWin );
+  XIfEvent( dpy, &event, xtglWaitForNotify, (XPointer) xWin );
 
   /* Bind the GLX context to the Window */
   glXMakeContextCurrent( dpy, glxWin, glxWin, context );
@@ -373,7 +315,7 @@ void* xtglCreateContext(int x, int y, int width, int height, char *displayID, in
     
   /* Map the window to the screen, and wait for it to appear */
   XMapWindow( dpy, xWin );
-  XIfEvent( dpy, &event, EXTGLWaitForNotify, (XPointer) xWin );
+  XIfEvent( dpy, &event, xtglWaitForNotify, (XPointer) xWin );
 
   /* Bind the GLX context to the Window */
   glXMakeContextCurrent( dpy, glxWin, glxWin, context );
