@@ -2,6 +2,7 @@
 
 #include <Cocoa/Cocoa.h>
 #include <Foundation/Foundation.h>
+#include <AppKit/AppKit.h>
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/gl.h>
 
@@ -193,103 +194,65 @@
 void xtglGetEvent(XTGLcontext* ctx, XTGLevent* event)
 {
   BasicOpenGLView* view = (BasicOpenGLView*) ctx;
-  switch([view getEventType]) {
-  case 1: {
-    pointer list = _sc->NIL;
-    _sc->imp_env->insert(list);
-    pointer tlist = cons(_sc,mk_integer(_sc,[view getC]),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    _sc->imp_env->insert(list);
-    tlist = cons(_sc,mk_integer(_sc,[view getEventType]),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    [view setEventType:-1];
-    return list;
-  }
-  case 2:
-  case 3:
-  case 4: {
-    pointer list = _sc->NIL;
-    _sc->imp_env->insert(list);
-    pointer tlist = cons(_sc,mk_integer(_sc,[view getY]),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    _sc->imp_env->insert(list);
-    tlist = cons(_sc,mk_integer(_sc,[view getX]),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    tlist = cons(_sc,mk_integer(_sc,[view getMButton]),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    tlist = cons(_sc,mk_integer(_sc,[view getEventType]),list);
-    _sc->imp_env->erase(list);
-    list = tlist;
-    [view setEventType:-1];
-    return list;
-  }
-  default: {      
-    [view setEventType:-1];
-    return _sc->NIL;
-  }
-  }
+  int* eventBuf = (int*) event;
+  // set event type into first i32 slot of event pointer
+  eventBuf[0] = [view getEventType];
+  // switch([view getEventType]) {
+  // case 1: 
+  // case 2:
+  // case 3:
+  // case 4: 
+  // default: 
+  // }
 }
 
 void xtglSwapBuffers(XTGLcontext *ctx)
 {    
   //return objc_glSwapBuffers(_sc, args);
-  BasicOpenGLView* view = (BasicOpenGLView*) cptr_value(pair_car(args));
-  CGLContextObj ctx = (CGLContextObj) [[view openGLContext] CGLContextObj];
-  CGLLockContext(ctx);
+  BasicOpenGLView* view = (BasicOpenGLView*) ctx;
+  CGLContextObj cgctx = (CGLContextObj) [[view openGLContext] CGLContextObj];
+  CGLLockContext(cgctx);
   [[view openGLContext] flushBuffer];
-  CGLUnlockContext(ctx);
+  CGLUnlockContext(cgctx);
   //CGLContextObj ctx = CGLGetCurrentContext();
   //CGLFlushDrawable(ctx);
-  return _sc->T;
 }
 
 void xtglMakeContextCurrent(XTGLcontext* ctx)
 {
   //    return objc_glMakeContextCurrent(_sc, args);
-  CGLContextObj ctx = CGLGetCurrentContext();
-  BasicOpenGLView* view = (BasicOpenGLView*) cptr_value(pair_car(args));
+  CGLContextObj cgctx = CGLGetCurrentContext();
+  BasicOpenGLView* view = (BasicOpenGLView*) ctx;
   //NSOpenGLView* view = (NSOpenGLView*) cptr_value(pair_car(args));
-  ctx = (CGLContextObj) [[view openGLContext] CGLContextObj];
-  //CGLLockContext(ctx);
-  CGLSetCurrentContext(ctx);
-  //CGLUnlockContext(ctx);    
-  return _sc->T;
+  cgctx = (CGLContextObj) [[view openGLContext] CGLContextObj];
+  //CGLLockContext(cgctx);
+  CGLSetCurrentContext(cgctx);
+  //CGLUnlockContext(cgctx);    
 }
 
 
 
 
-void* xtglCreateContext(int x, int y, int width, int height, char *displayID, int fullscreen)
+XTGLcontext* xtglCreateContext(int x, int y, int width, int height, char *displayID, int fullscreen)
 {
   //return objc_makeGLContext(_sc, args);
-     
-  bool fullscrn = (pair_cadr(args) == _sc->T) ? 1 : 0; 
-  int  posx = ivalue(pair_caddr(args));
-  int  posy = ivalue(pair_cadddr(args));
-  int  width = ivalue(pair_car(pair_cddddr(args)));
-  int  height = ivalue(pair_cadr(pair_cddddr(args)));
 
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
-  NSRect frameRect = NSMakeRect(posx,posy,width,height);
+  NSRect frameRect = NSMakeRect(x,y,width,height);
 
   // Get the screen rect of our main display
   NSArray* screens = [NSScreen screens];
   NSScreen* scrn = [NSScreen mainScreen]; // [screens objectAtIndex:0];
     
   NSRect screenRect = frameRect;
-  if(fullscrn) screenRect = [scrn frame];
+  if(fullscreen) screenRect = [scrn frame];
     
   //NSSize size = screenRect.size;
   NSPoint position = screenRect.origin;	
   NSSize size = screenRect.size;
     
-  if(fullscrn) {
+  if(fullscreen) {
     position.x = 0;
     position.y = 0;      
     screenRect.origin = position;
@@ -322,7 +285,7 @@ void* xtglCreateContext(int x, int y, int width, int height, char *displayID, in
   BasicOpenGLView* view = [[BasicOpenGLView alloc] initWithFrame:screenRect pixelFormat:fmt];
     
   int windowStyleMask;
-  if(fullscrn){
+  if(fullscreen){
     windowStyleMask = NSBorderlessWindowMask;
   }else{
     windowStyleMask = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
@@ -336,7 +299,7 @@ void* xtglCreateContext(int x, int y, int width, int height, char *displayID, in
   [window useOptimizedDrawing:YES];
   [window setOpaque:YES];
   [window setBackgroundColor:[NSColor colorWithDeviceRed:0.0 green:0.0 blue:0.0 alpha:1.0]];
-  if(fullscrn) {
+  if(fullscreen) {
     [window setHasShadow:NO];
     [window makeKeyAndOrderFront:nil];
   }else{	
@@ -373,36 +336,28 @@ void* xtglCreateContext(int x, int y, int width, int height, char *displayID, in
 
   //[pool release];
 
-  return mk_cptr(_sc, view); //list; //_cons(_sc, mk_cptr(_sc, (void*)dpy),mk_cptr(_sc,(void*)glxWin),1);
+  return (XTGLcontext*)view; //list; //_cons(_sc, mk_cptr(_sc, (void*)dpy),mk_cptr(_sc,(void*)glxWin),1);
 }
 
 
-void* xtglCreateCoreContext(int x, int y, int width, int height, char *displayID, int fullscreen)
+XTGLcontext* xtglCreateCoreContext(int x, int y, int width, int height, char *displayID, int fullscreen)
 {
-  //return objc_makeGLContext(_sc, args);
-  
-  bool fullscrn = (pair_cadr(args) == _sc->T) ? 1 : 0;
-  int  posx = ivalue(pair_caddr(args));
-  int  posy = ivalue(pair_cadddr(args));
-  int  width = ivalue(pair_car(pair_cddddr(args)));
-  int  height = ivalue(pair_cadr(pair_cddddr(args)));
-  
   NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
-  NSRect frameRect = NSMakeRect(posx,posy,width,height);
+  NSRect frameRect = NSMakeRect(x,y,width,height);
 
   // Get the screen rect of our main display
   NSArray* screens = [NSScreen screens];
   NSScreen* scrn = [NSScreen mainScreen]; // [screens objectAtIndex:0];
 
   NSRect screenRect = frameRect;
-  if(fullscrn) screenRect = [scrn frame];
+  if(fullscreen) screenRect = [scrn frame];
 
   //NSSize size = screenRect.size;
   NSPoint position = screenRect.origin;
   NSSize size = screenRect.size;
 
-  if(fullscrn) {
+  if(fullscreen) {
     position.x = 0;
     position.y = 0;
     screenRect.origin = position;
@@ -435,7 +390,7 @@ void* xtglCreateCoreContext(int x, int y, int width, int height, char *displayID
   BasicOpenGLView* view = [[BasicOpenGLView alloc] initWithFrame:screenRect pixelFormat:fmt];
 
   int windowStyleMask;
-  if(fullscrn){
+  if(fullscreen){
     windowStyleMask = NSBorderlessWindowMask;
   }else{
     windowStyleMask = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
@@ -449,7 +404,7 @@ void* xtglCreateCoreContext(int x, int y, int width, int height, char *displayID
   [window useOptimizedDrawing:YES];
   [window setOpaque:YES];
   [window setBackgroundColor:[NSColor colorWithDeviceRed:0.0 green:0.0 blue:0.0 alpha:1.0]];
-  if(fullscrn) {
+  if(fullscreen) {
     [window setHasShadow:NO];
     [window makeKeyAndOrderFront:nil];
   }else{
@@ -486,5 +441,5 @@ void* xtglCreateCoreContext(int x, int y, int width, int height, char *displayID
 
   //[pool release];
     
-  return mk_cptr(_sc, view); //list; //_cons(_sc, mk_cptr(_sc, (void*)dpy),mk_cptr(_sc,(void*)glxWin),1);
+    return (XTGLcontext*)view; //list; //_cons(_sc, mk_cptr(_sc, (void*)dpy),mk_cptr(_sc,(void*)glxWin),1);
 }
