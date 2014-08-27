@@ -5,7 +5,7 @@ LIBNAME := libxtgl
 # Liunx
 ifeq ($(UNAME), Linux)
 CXX = g++
-CXXFLAGS += -g -shared -fPIC -lGL -Iinclude
+CXXFLAGS += -g -shared -fPIC -lGL -lX11 -Iinclude
 LIBEXT = so
 endif
 # OSX
