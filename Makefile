@@ -17,11 +17,8 @@ endif
 
 TARGET := $(LIBNAME).$(LIBEXT)
 
-$(TARGET): $(LIBNAME).o
-	$(CXX) $(CXXFLAGS) -o $@ $^
-
-$(LIBNAME).o: src/XTGL.cpp
-	$(CXX) $(CXXFLAGS)  -o $@ $<
+$(TARGET): src/XTGL.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 shared: $(TARGET)
 
