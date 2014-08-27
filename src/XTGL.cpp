@@ -1,4 +1,4 @@
-#include "xtmgl.h"
+#include "XTGL.h"
 
 #ifdef _MSC_VER
 //#include <unistd.h>
@@ -8,10 +8,8 @@
 #include <GL/glx.h>
 #include <GL/gl.h>
 #elif __APPLE__
-#include <malloc/malloc.h>
 #include <Cocoa/Cocoa.h>
-#include <CoreFoundation/CoreFoundation.h>
-#include <AppKit/AppKit.h>
+#include <Foundation/Foundation.h>
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/gl.h>
 #endif
@@ -29,7 +27,6 @@
   char c;
 }
 
-+ (NSOpenGLPixelFormat*) basicPixelFormat;
 - (id)initWithFrame:(NSRect)frameRect pixelFormat:(NSOpenGLPixelFormat *)format;
 - (float) getX;
 - (float) getY;
@@ -37,7 +34,6 @@
 - (char) getC;
 - (int) getEventType;
 - (void) setEventType:(int)t;
-- (void) resizeGL;  
 - (void)keyDown:(NSEvent *)theEvent;
 - (void) mouseDown:(NSEvent *)theEvent;
 - (void) rightMouseDown:(NSEvent *)theEvent;
@@ -86,7 +82,7 @@
   }    
   return;
 }
- 
+
 - (void)mouseDown:(NSEvent *)theEvent // trackball
 {
   if ([theEvent modifierFlags] & NSControlKeyMask) // send to pan
@@ -232,25 +228,21 @@ static Bool EXTGLWaitForNotify( Display *dpy, XEvent *event, XPointer arg ) {
   return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 }
 
-pointer SchemeFFI::glSwapBuffers(scheme* _sc, pointer args)
+Bool glSwapBuffers(Display* dpy)
 {
-  args = pair_car(args);
-  glXSwapBuffers((Display*) cptr_value(pair_car(args)), (GLXDrawable) cptr_value(pair_cadr(args)));
-  return _sc->T;
+  return glXSwapBuffers(dpy, (GLXDrawable) cptr_value(pair_cadr(args)));
 }
 
-pointer SchemeFFI::glMakeContextCurrent(scheme* _sc, pointer args)
+Bool glMakeContextCurrent(Display* dpy)
 {
   args = pair_car(args);
-  Display* dpy = (Display*) cptr_value(pair_car(args));
   GLXDrawable glxWin = (GLXDrawable) cptr_value(pair_cadr(args));
   GLXContext context = (GLXContext) cptr_value(pair_caddr(args));
   /* Bind the GLX context to the Window */
-  glXMakeContextCurrent( (Display*) dpy, (GLXDrawable) glxWin, (GLXDrawable) glxWin, (GLXContext) context);    
-  return _sc->T;
+  return glXMakeContextCurrent( (Display*) dpy, (GLXDrawable) glxWin, (GLXDrawable) glxWin, (GLXContext) context);    
 }
 
-pointer SchemeFFI::getEvent(scheme* _sc, pointer args)
+void* getEvent(Display* dpy)
 {
   args = pair_car(args);
   Display* dpy = (Display*) cptr_value(pair_car(args));
@@ -487,7 +479,7 @@ void* opengl_render_callback(void* a)
 }
 
   
-pointer SchemeFFI::makeGLContext(scheme* _sc, pointer args)
+void* makeGLContext(void* args)
 {
   Display              *dpy;
   Window                xWin;
@@ -656,7 +648,7 @@ pointer SchemeFFI::makeGLContext(scheme* _sc, pointer args)
 //  return (event->type == MapNotify) && (event->xmap.window == (Window) arg);
 //}
 
-pointer SchemeFFI::addGLExtension(scheme* _sc, pointer args)
+void* addGLExtension(void* args)
 {
   using namespace llvm;
   char* ext_name = string_value(pair_car(args));
@@ -681,7 +673,7 @@ pointer SchemeFFI::addGLExtension(scheme* _sc, pointer args)
 
 int EXT_WIN_MSG_MASK = PM_REMOVE;
  
-pointer SchemeFFI::getEvent(scheme* _sc, pointer args)
+void* getEvent(void* args)
 {
   //std::cout << "GET EVENTS!" << std::endl;
   // this here to stop opengl swap buffer code from pinching out input events before we get to them    
@@ -731,7 +723,7 @@ pointer SchemeFFI::getEvent(scheme* _sc, pointer args)
 }
  
     
-pointer SchemeFFI::glSwapBuffers(scheme* _sc, pointer args)
+void* glSwapBuffers(void* args)
 {
   args = pair_car(args);
   SwapBuffers((HDC)cptr_value(pair_car(args)));
@@ -750,7 +742,7 @@ pointer SchemeFFI::glSwapBuffers(scheme* _sc, pointer args)
 }
 
   
-// pointer SchemeFFI::glSwapBuffers(scheme* _sc, pointer args)
+// void* glSwapBuffers(scheme* _sc, pointer args)
 // {
 //   args = pair_car(args);
 //   SwapBuffers((HDC)cptr_value(pair_car(args)));
@@ -770,7 +762,7 @@ pointer SchemeFFI::glSwapBuffers(scheme* _sc, pointer args)
 //   return _sc->T;
 // }
 
-pointer SchemeFFI::glMakeContextCurrent(scheme* _sc, pointer args)
+void* glMakeContextCurrent(void* args)
 {
   wglMakeCurrent ( (HDC)cptr_value(pair_car(args)), (HGLRC)cptr_value(pair_cadr(args)) );
   return _sc->T;
@@ -796,7 +788,7 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 }
 
 
-pointer SchemeFFI::makeGLContext(scheme* _sc, pointer args)
+void* makeGLContext(void* args)
 {
   PIXELFORMATDESCRIPTOR pfd = { 
     sizeof(PIXELFORMATDESCRIPTOR),  //  size of this pfd  
@@ -978,194 +970,194 @@ pointer SchemeFFI::makeGLContext(scheme* _sc, pointer args)
 
 #elif __APPLE__
 
-pointer SchemeFFI::getEvent(scheme* _sc, pointer args)
+void* getEvent(void* args)
 {
-BasicOpenGLView* view = (BasicOpenGLView*) cptr_value(pair_car(args));
-switch([view getEventType]) {
- case 1: {
-pointer list = _sc->NIL;
-_sc->imp_env->insert(list);
-pointer tlist = cons(_sc,mk_integer(_sc,[view getC]),list);
-_sc->imp_env->erase(list);
-list = tlist;
-_sc->imp_env->insert(list);
-tlist = cons(_sc,mk_integer(_sc,[view getEventType]),list);
-_sc->imp_env->erase(list);
-list = tlist;
-[view setEventType:-1];
-return list;
-}
- case 2:
- case 3:
- case 4: {
-pointer list = _sc->NIL;
-_sc->imp_env->insert(list);
-pointer tlist = cons(_sc,mk_integer(_sc,[view getY]),list);
-_sc->imp_env->erase(list);
-list = tlist;
-_sc->imp_env->insert(list);
-tlist = cons(_sc,mk_integer(_sc,[view getX]),list);
-_sc->imp_env->erase(list);
-list = tlist;
-tlist = cons(_sc,mk_integer(_sc,[view getMButton]),list);
-_sc->imp_env->erase(list);
-list = tlist;
-tlist = cons(_sc,mk_integer(_sc,[view getEventType]),list);
-_sc->imp_env->erase(list);
-list = tlist;
-[view setEventType:-1];
-return list;
-}
- default: {      
-[view setEventType:-1];
-return _sc->NIL;
-}
-}
+  BasicOpenGLView* view = (BasicOpenGLView*) cptr_value(pair_car(args));
+  switch([view getEventType]) {
+  case 1: {
+    pointer list = _sc->NIL;
+    _sc->imp_env->insert(list);
+    pointer tlist = cons(_sc,mk_integer(_sc,[view getC]),list);
+    _sc->imp_env->erase(list);
+    list = tlist;
+    _sc->imp_env->insert(list);
+    tlist = cons(_sc,mk_integer(_sc,[view getEventType]),list);
+    _sc->imp_env->erase(list);
+    list = tlist;
+    [view setEventType:-1];
+    return list;
+  }
+  case 2:
+  case 3:
+  case 4: {
+    pointer list = _sc->NIL;
+    _sc->imp_env->insert(list);
+    pointer tlist = cons(_sc,mk_integer(_sc,[view getY]),list);
+    _sc->imp_env->erase(list);
+    list = tlist;
+    _sc->imp_env->insert(list);
+    tlist = cons(_sc,mk_integer(_sc,[view getX]),list);
+    _sc->imp_env->erase(list);
+    list = tlist;
+    tlist = cons(_sc,mk_integer(_sc,[view getMButton]),list);
+    _sc->imp_env->erase(list);
+    list = tlist;
+    tlist = cons(_sc,mk_integer(_sc,[view getEventType]),list);
+    _sc->imp_env->erase(list);
+    list = tlist;
+    [view setEventType:-1];
+    return list;
+  }
+  default: {      
+    [view setEventType:-1];
+    return _sc->NIL;
+  }
+  }
 }
 
-pointer SchemeFFI::glSwapBuffers(scheme* _sc, pointer args)
+void* glSwapBuffers(void* args)
 {    
-//return objc_glSwapBuffers(_sc, args);
-BasicOpenGLView* view = (BasicOpenGLView*) cptr_value(pair_car(args));
-CGLContextObj ctx = (CGLContextObj) [[view openGLContext] CGLContextObj];
-CGLLockContext(ctx);
-[[view openGLContext] flushBuffer];
-CGLUnlockContext(ctx);
-//CGLContextObj ctx = CGLGetCurrentContext();
-//CGLFlushDrawable(ctx);
-return _sc->T;
+  //return objc_glSwapBuffers(_sc, args);
+  BasicOpenGLView* view = (BasicOpenGLView*) cptr_value(pair_car(args));
+  CGLContextObj ctx = (CGLContextObj) [[view openGLContext] CGLContextObj];
+  CGLLockContext(ctx);
+  [[view openGLContext] flushBuffer];
+  CGLUnlockContext(ctx);
+  //CGLContextObj ctx = CGLGetCurrentContext();
+  //CGLFlushDrawable(ctx);
+  return _sc->T;
 }
 
-pointer SchemeFFI::glMakeContextCurrent(scheme* _sc, pointer args)
+void* glMakeContextCurrent(void* args)
 {
-//    return objc_glMakeContextCurrent(_sc, args);
-CGLContextObj ctx = CGLGetCurrentContext();
-BasicOpenGLView* view = (BasicOpenGLView*) cptr_value(pair_car(args));
-//NSOpenGLView* view = (NSOpenGLView*) cptr_value(pair_car(args));
-ctx = (CGLContextObj) [[view openGLContext] CGLContextObj];
-//CGLLockContext(ctx);
-CGLSetCurrentContext(ctx);
-//CGLUnlockContext(ctx);    
-return _sc->T;
+  //    return objc_glMakeContextCurrent(_sc, args);
+  CGLContextObj ctx = CGLGetCurrentContext();
+  BasicOpenGLView* view = (BasicOpenGLView*) cptr_value(pair_car(args));
+  //NSOpenGLView* view = (NSOpenGLView*) cptr_value(pair_car(args));
+  ctx = (CGLContextObj) [[view openGLContext] CGLContextObj];
+  //CGLLockContext(ctx);
+  CGLSetCurrentContext(ctx);
+  //CGLUnlockContext(ctx);    
+  return _sc->T;
 }
 
 
 
 
-pointer SchemeFFI::makeGLContext(scheme* _sc, pointer args)
+void* makeGLContext(void* args)
 {
-//return objc_makeGLContext(_sc, args);
+  //return objc_makeGLContext(_sc, args);
      
-bool fullscrn = (pair_cadr(args) == _sc->T) ? 1 : 0; 
-int  posx = ivalue(pair_caddr(args));
-int  posy = ivalue(pair_cadddr(args));
-int  width = ivalue(pair_car(pair_cddddr(args)));
-int  height = ivalue(pair_cadr(pair_cddddr(args)));
+  bool fullscrn = (pair_cadr(args) == _sc->T) ? 1 : 0; 
+  int  posx = ivalue(pair_caddr(args));
+  int  posy = ivalue(pair_cadddr(args));
+  int  width = ivalue(pair_car(pair_cddddr(args)));
+  int  height = ivalue(pair_cadr(pair_cddddr(args)));
 
-NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+  NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
-NSRect frameRect = NSMakeRect(posx,posy,width,height);
+  NSRect frameRect = NSMakeRect(posx,posy,width,height);
 
-// Get the screen rect of our main display
-NSArray* screens = [NSScreen screens];
-NSScreen* scrn = [NSScreen mainScreen]; // [screens objectAtIndex:0];
+  // Get the screen rect of our main display
+  NSArray* screens = [NSScreen screens];
+  NSScreen* scrn = [NSScreen mainScreen]; // [screens objectAtIndex:0];
     
-NSRect screenRect = frameRect;
-if(fullscrn) screenRect = [scrn frame];
+  NSRect screenRect = frameRect;
+  if(fullscrn) screenRect = [scrn frame];
     
-//NSSize size = screenRect.size;
-NSPoint position = screenRect.origin;	
-NSSize size = screenRect.size;
+  //NSSize size = screenRect.size;
+  NSPoint position = screenRect.origin;	
+  NSSize size = screenRect.size;
     
-if(fullscrn) {
-position.x = 0;
-position.y = 0;      
-screenRect.origin = position;
-}
+  if(fullscrn) {
+    position.x = 0;
+    position.y = 0;      
+    screenRect.origin = position;
+  }
       
-NSOpenGLPixelFormatAttribute array[] = 		
-  {
-NSOpenGLPFAWindow,
-  NSOpenGLPFACompliant,
-  NSOpenGLPFANoRecovery,
+  NSOpenGLPixelFormatAttribute array[] = 		
+    {
+      NSOpenGLPFAWindow,
+      NSOpenGLPFACompliant,
+      NSOpenGLPFANoRecovery,
 
-// Add these back for multsampling	
-// NSOpenGLPFAMultisample,
-// NSOpenGLPFASampleBuffers, (NSOpenGLPixelFormatAttribute)1,
-// NSOpenGLPFASamples, (NSOpenGLPixelFormatAttribute)4,							
+      // Add these back for multsampling	
+      // NSOpenGLPFAMultisample,
+      // NSOpenGLPFASampleBuffers, (NSOpenGLPixelFormatAttribute)1,
+      // NSOpenGLPFASamples, (NSOpenGLPixelFormatAttribute)4,							
 	
-  NSOpenGLPFAColorSize, (NSOpenGLPixelFormatAttribute)24,			
-  NSOpenGLPFADepthSize, (NSOpenGLPixelFormatAttribute)24,
-  NSOpenGLPFAAccumSize, (NSOpenGLPixelFormatAttribute)24,
-  NSOpenGLPFAAlphaSize, (NSOpenGLPixelFormatAttribute)8,
-  NSOpenGLPFAStencilSize, (NSOpenGLPixelFormatAttribute)8,
+      NSOpenGLPFAColorSize, (NSOpenGLPixelFormatAttribute)24,			
+      NSOpenGLPFADepthSize, (NSOpenGLPixelFormatAttribute)24,
+      NSOpenGLPFAAccumSize, (NSOpenGLPixelFormatAttribute)24,
+      NSOpenGLPFAAlphaSize, (NSOpenGLPixelFormatAttribute)8,
+      NSOpenGLPFAStencilSize, (NSOpenGLPixelFormatAttribute)8,
 	
-  NSOpenGLPFADoubleBuffer,
-  NSOpenGLPFAAccelerated,
-  (NSOpenGLPixelFormatAttribute)0				
-  };
+      NSOpenGLPFADoubleBuffer,
+      NSOpenGLPFAAccelerated,
+      (NSOpenGLPixelFormatAttribute)0				
+    };
 
-NSOpenGLPixelFormat* fmt = [[NSOpenGLPixelFormat alloc] initWithAttributes: (NSOpenGLPixelFormatAttribute*) array]; 
-//NSOpenGLView* view = [[NSOpenGLView alloc] initWithFrame:screenRect pixelFormat:fmt];
-BasicOpenGLView* view = [[BasicOpenGLView alloc] initWithFrame:screenRect pixelFormat:fmt];
+  NSOpenGLPixelFormat* fmt = [[NSOpenGLPixelFormat alloc] initWithAttributes: (NSOpenGLPixelFormatAttribute*) array]; 
+  //NSOpenGLView* view = [[NSOpenGLView alloc] initWithFrame:screenRect pixelFormat:fmt];
+  BasicOpenGLView* view = [[BasicOpenGLView alloc] initWithFrame:screenRect pixelFormat:fmt];
     
-int windowStyleMask;
-if(fullscrn){
-windowStyleMask = NSBorderlessWindowMask;
-}else{
-windowStyleMask = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
-}
-NSWindow* window = [[NSWindow alloc] initWithContentRect:screenRect
-styleMask:windowStyleMask
-backing:NSBackingStoreBuffered
-defer:YES screen:scrn];
+  int windowStyleMask;
+  if(fullscrn){
+    windowStyleMask = NSBorderlessWindowMask;
+  }else{
+    windowStyleMask = NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask;
+  }
+  NSWindow* window = [[NSWindow alloc] initWithContentRect:screenRect
+                      styleMask:windowStyleMask
+                      backing:NSBackingStoreBuffered
+                      defer:YES screen:scrn];
     
-[window setContentView:view];
-[window useOptimizedDrawing:YES];
-[window setOpaque:YES];
-[window setBackgroundColor:[NSColor colorWithDeviceRed:0.0 green:0.0 blue:0.0 alpha:1.0]];
-if(fullscrn) {
-[window setHasShadow:NO];
-[window makeKeyAndOrderFront:nil];
-}else{	
-[window setTitle:@"Extempore OpenGL Compatibility Profile Window"];
-[window makeKeyAndOrderFront:nil];
+  [window setContentView:view];
+  [window useOptimizedDrawing:YES];
+  [window setOpaque:YES];
+  [window setBackgroundColor:[NSColor colorWithDeviceRed:0.0 green:0.0 blue:0.0 alpha:1.0]];
+  if(fullscrn) {
+    [window setHasShadow:NO];
+    [window makeKeyAndOrderFront:nil];
+  }else{	
+    [window setTitle:@"Extempore OpenGL Compatibility Profile Window"];
+    [window makeKeyAndOrderFront:nil];
+  }
+
+  [window display];
+
+  GLint swapInt = 1;
+  [[view openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
+
+  CGLContextObj ctx = (CGLContextObj) [[view openGLContext] CGLContextObj];
+
+  CGLSetCurrentContext(ctx);
+  CGLLockContext(ctx);
+
+  // glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+  // int glerrors = glGetError();
+  // printf("OpenGL Context Errors: %d\n",glerrors);
+  CGLEnable( ctx, kCGLCEMPEngine);
+
+  CGLUnlockContext(ctx);
+
+  // pointer list = _sc->NIL;
+  // _sc->imp_env->insert(list);
+  // pointer tlist = cons(_sc,mk_cptr(_sc,(void*)v),list);
+  // _sc->imp_env->erase(list);
+  // list = tlist;
+  // _sc->imp_env->insert(list);
+  // tlist = cons(_sc,mk_cptr(_sc,(void*)hdc),list);
+  // _sc->imp_env->erase(list);
+  // list = tlist;
+
+  //[pool release];
+
+  return mk_cptr(_sc, view); //list; //_cons(_sc, mk_cptr(_sc, (void*)dpy),mk_cptr(_sc,(void*)glxWin),1);
 }
 
-[window display];
 
-GLint swapInt = 1;
-[[view openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
-
-CGLContextObj ctx = (CGLContextObj) [[view openGLContext] CGLContextObj];
-
-CGLSetCurrentContext(ctx);
-CGLLockContext(ctx);
-
-// glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-// int glerrors = glGetError();
-// printf("OpenGL Context Errors: %d\n",glerrors);
-CGLEnable( ctx, kCGLCEMPEngine);
-
-CGLUnlockContext(ctx);
-
-// pointer list = _sc->NIL;
-// _sc->imp_env->insert(list);
-// pointer tlist = cons(_sc,mk_cptr(_sc,(void*)v),list);
-// _sc->imp_env->erase(list);
-// list = tlist;
-// _sc->imp_env->insert(list);
-// tlist = cons(_sc,mk_cptr(_sc,(void*)hdc),list);
-// _sc->imp_env->erase(list);
-// list = tlist;
-
-//[pool release];
-
-return mk_cptr(_sc, view); //list; //_cons(_sc, mk_cptr(_sc, (void*)dpy),mk_cptr(_sc,(void*)glxWin),1);
-}
-
-
-pointer SchemeFFI::makeGLCoreContext(scheme* _sc, pointer args)
+void* makeGLCoreContext(void* args)
 {
   //return objc_makeGLContext(_sc, args);
   
