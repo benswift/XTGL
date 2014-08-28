@@ -30,4 +30,4 @@ $(LIBNAME).so: $(LIBNAME).o
 	$(CXX) -shared -o $@ $< $(LDFLAGS)
 
 clean:
-	rm -f *.o *.so *.dylib *.dll *.exe
+	rm -f *.o *.so *.dylib
