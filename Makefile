@@ -5,7 +5,8 @@ LIBNAME := libxtgl
 # Liunx
 ifeq ($(UNAME), Linux)
 CXX = g++
-CXXFLAGS += -g -shared -fPIC -lGL -lX11 -Iinclude
+CXXFLAGS += -g -fPIC -Iinclude
+LDFLAGS += -lGL -lX11
 LIBEXT = so
 endif
 # OSX
@@ -17,8 +18,16 @@ endif
 
 TARGET := $(LIBNAME).$(LIBEXT)
 
-$(TARGET): src/XTGL.cpp
+shared: $(TARGET)
+
+$(LIBNAME).dylib: src/XTGL.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
+
+$(LIBNAME).o: src/XTGL.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(LIBNAME).so: $(LIBNAME).o
+	$(CXX) -shared -o $@ $< $(LDFLAGS)
 
 clean:
 	rm -f *.o *.so *.dylib *.dll *.exe
