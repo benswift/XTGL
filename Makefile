@@ -23,11 +23,8 @@ shared: $(TARGET)
 $(LIBNAME).dylib: src/XTGL.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
-$(LIBNAME).o: src/XTGL.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(LIBNAME).so: $(LIBNAME).o
-	$(CXX) -shared -o $@ $< $(LDFLAGS)
+$(LIBNAME).so: src/XTGL.cpp
+	$(CXX) $(CXXFLAGS) -shared -o $@ $< $(LDFLAGS)
 
 clean:
 	rm -f *.o *.so *.dylib
