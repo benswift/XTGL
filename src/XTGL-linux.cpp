@@ -298,3 +298,42 @@ XTGLcontext* xtglCreateContext(int x, int y, int width, int height, char *displa
 
   return (void*)xtctx;
 }
+
+
+void xtglSwapBuffers(XTGLcontext *ctx)
+{
+  // glXSwapBuffers((Display*)ctx, (GLXDrawable) cptr_value(pair_cadr(args)));
+}
+
+void xtglMakeContextCurrent(XTGLcontext* ctx)
+{
+  // unpack the struct which is flying around
+  XTGLGLXcontext* glxctx = (XTGLGLXcontext*)ctx;
+  Display* dpy = glxctx->dpy;
+  GLXDrawable glxWin = glxctx->glxWin;
+  GLXContext context = glxctx->context;
+  /* Bind the GLX context to the Window */
+  glXMakeContextCurrent(dpy, glxWin, glxWin, context);    
+}
+
+void xtglGetEvent(XTGLcontext* ctx, XTGLevent* event)
+{
+  // unpack the struct which is flying around
+  XTGLGLXcontext* glxctx = (XTGLGLXcontext*)ctx;
+  Display* dpy = glxctx->dpy;
+  GLXDrawable glxWin = glxctx->glxWin;
+  GLXContext context = glxctx->context;
+  XEvent xev;
+  if(XPending(dpy) == 0) return;
+  //only return the LATEST event. DROP eveything earlier
+  while(XPending(dpy)) XNextEvent(dpy, &xev);
+  // switch(event.type){
+  // case ButtonPress: 
+  // case MotionNotify: 
+  // case KeyPress: 
+  // default:
+  // }
+  int* eventBuf = (int*) event;
+  // set event type into first i32 slot of event pointer
+  eventBuf[0] = xev.type;
+}
